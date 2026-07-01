@@ -603,6 +603,7 @@ function renderingGraficiElite(visite) {
   // 2. RMR + BMR
   const rmrValues = visite.map(v => sesso === 'M' ? (66.473 + 13.7516 * v.peso + 5.0033 * v.altezza - 6.755 * v.eta) : (655.0955 + 9.5634 * v.peso + 1.8496 * v.altezza - 4.6756 * v.eta));
   const bmrValues = visite.map(v => sesso === 'M' ? (10 * v.peso + 6.25 * v.altezza - 5 * v.eta + 5) : (10 * v.peso + 6.25 * v.altezza - 5 * v.eta - 161));
+  if (chartRmrBmr) chartRmrBmr.destroy();
   chartRmrBmr = new Chart(document.getElementById('chart-rmr-bmr').getContext('2d'), {
     type: 'line',
     data: {
@@ -650,6 +651,7 @@ function renderingGraficiElite(visite) {
       ffmData.push(null);
     }
   });
+  if (chartComp) chartComp.destroy();
   chartComp = new Chart(document.getElementById('chart-composizione').getContext('2d'), {
     type: 'line',
     data: {
@@ -680,6 +682,7 @@ function renderingGraficiElite(visite) {
   // 4. KG MASSA
   const fmKgData = visite.map((v, i) => fmData[i] ? (v.peso * fmData[i]) / 100 : null);
   const ffmKgData = visite.map((v, i) => fmData[i] ? v.peso - fmKgData[i] : null);
+  if (chartKgMassa) chartKgMassa.destroy();
   chartKgMassa = new Chart(document.getElementById('chart-kg-massa').getContext('2d'), {
     type: 'line',
     data: {
@@ -716,6 +719,7 @@ function renderingGraficiElite(visite) {
   const sommaPliche = visite.map(v => plicheFields.reduce((sum, f) => sum + (v[f] || 0), 0));
   
   // Somma Pliche
+  if (chartSommaPliche) chartSommaPliche.destroy();
   chartSommaPliche = new Chart(document.getElementById('chart-somma-pliche').getContext('2d'), {
     type: 'line',
     data: {
@@ -743,6 +747,7 @@ function renderingGraficiElite(visite) {
     const p_sottoscapolare = visite.map(v => v.p_sottoscapolare || 0);
     const p_coscia = visite.map(v => v.p_coscia || 0);
 
+    if (Chart.getChart('chart-pliche-1-uomo')) Chart.getChart('chart-pliche-1-uomo').destroy();
     new Chart(document.getElementById('chart-pliche-1-uomo').getContext('2d'), {
       type: 'line',
       data: { labels, datasets: [
@@ -753,6 +758,7 @@ function renderingGraficiElite(visite) {
     });
     renderStatsWidget('stats-pliche-1-uomo', p_pettorale, 'mm');
 
+    if (Chart.getChart('chart-pliche-2-uomo')) Chart.getChart('chart-pliche-2-uomo').destroy();
     new Chart(document.getElementById('chart-pliche-2-uomo').getContext('2d'), {
       type: 'line',
       data: { labels, datasets: [
@@ -763,6 +769,7 @@ function renderingGraficiElite(visite) {
     });
     renderStatsWidget('stats-pliche-2-uomo', p_addome, 'mm');
 
+    if (Chart.getChart('chart-pliche-3-uomo')) Chart.getChart('chart-pliche-3-uomo').destroy();
     new Chart(document.getElementById('chart-pliche-3-uomo').getContext('2d'), {
       type: 'line',
       data: { labels, datasets: [
@@ -773,6 +780,7 @@ function renderingGraficiElite(visite) {
     });
     renderStatsWidget('stats-pliche-3-uomo', p_tricipitale, 'mm');
 
+    if (Chart.getChart('chart-pliche-4-uomo')) Chart.getChart('chart-pliche-4-uomo').destroy();
     new Chart(document.getElementById('chart-pliche-4-uomo').getContext('2d'), {
       type: 'line',
       data: { labels, datasets: [
@@ -789,6 +797,7 @@ function renderingGraficiElite(visite) {
     const p_coscia = visite.map(v => v.p_coscia || 0);
     const p_ascellare = visite.map(v => v.p_ascellare || 0);
 
+    if (Chart.getChart('chart-pliche-1-donna')) Chart.getChart('chart-pliche-1-donna').destroy();
     new Chart(document.getElementById('chart-pliche-1-donna').getContext('2d'), {
       type: 'line',
       data: { labels, datasets: [
@@ -799,6 +808,7 @@ function renderingGraficiElite(visite) {
     });
     renderStatsWidget('stats-pliche-1-donna', p_tricipitale, 'mm');
 
+    if (Chart.getChart('chart-pliche-2-donna')) Chart.getChart('chart-pliche-2-donna').destroy();
     new Chart(document.getElementById('chart-pliche-2-donna').getContext('2d'), {
       type: 'line',
       data: { labels, datasets: [
@@ -809,6 +819,7 @@ function renderingGraficiElite(visite) {
     });
     renderStatsWidget('stats-pliche-2-donna', p_addome, 'mm');
 
+    if (Chart.getChart('chart-pliche-3-donna')) Chart.getChart('chart-pliche-3-donna').destroy();
     new Chart(document.getElementById('chart-pliche-3-donna').getContext('2d'), {
       type: 'line',
       data: { labels, datasets: [
@@ -829,6 +840,7 @@ function renderingGraficiElite(visite) {
   const c_coscia = visite.map(v => v.c_coscia || 0);
 
   if (sesso === 'M') {
+    if (Chart.getChart('chart-circ-1-uomo')) Chart.getChart('chart-circ-1-uomo').destroy();
     new Chart(document.getElementById('chart-circ-1-uomo').getContext('2d'), {
       type: 'line',
       data: { labels, datasets: [
@@ -840,6 +852,7 @@ function renderingGraficiElite(visite) {
     });
     renderStatsWidget('stats-circ-1-uomo', c_torace, 'cm');
   } else {
+    if (Chart.getChart('chart-circ-1-donna')) Chart.getChart('chart-circ-1-donna').destroy();
     new Chart(document.getElementById('chart-circ-1-donna').getContext('2d'), {
       type: 'line',
       data: { labels, datasets: [
@@ -852,6 +865,7 @@ function renderingGraficiElite(visite) {
     renderStatsWidget('stats-circ-1-donna', c_vita, 'cm');
   }
 
+  if (Chart.getChart('chart-circ-braccio')) Chart.getChart('chart-circ-braccio').destroy();
   new Chart(document.getElementById('chart-circ-braccio').getContext('2d'), {
     type: 'line',
     data: { labels, datasets: [
