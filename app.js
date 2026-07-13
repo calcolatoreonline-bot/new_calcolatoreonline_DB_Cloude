@@ -3066,7 +3066,7 @@ async function catturaCardInstagram(elementId, scale = 3) {
   const sfondoOriginale = el.style.background;
   try {
     el.style.background = COLORE_VIOLETTO_PDF;
-    return await html2canvas(el, { scale, useCORS: true, allowTaint: true, backgroundColor: COLORE_VIOLETTO_PDF, logging: false });
+    return await html2canvas(el, { scale, useCORS: true, backgroundColor: COLORE_VIOLETTO_PDF, logging: false });
   } catch (err) {
     console.warn('Errore cattura card per Instagram:', elementId, err);
     return null;
@@ -3091,7 +3091,7 @@ async function catturaHTMLOffscreenInstagram(innerHTML, larghezzaPx, scale = 3) 
   container.style.width = larghezzaPx + 'px';
   container.innerHTML = innerHTML;
   try {
-    return await html2canvas(container, { scale, useCORS: true, allowTaint: true, backgroundColor: null, logging: false });
+    return await html2canvas(container, { scale, useCORS: true, backgroundColor: null, logging: false });
   } catch (err) {
     console.warn('Errore cattura tabella riepilogo per Instagram:', err);
     return null;
@@ -3596,7 +3596,8 @@ async function scaricaSlideInstagram() {
     await scaricaCanvasComePNG(canvas3, `${nomePaziente} - Slide 3.png`);
   } catch (err) {
     console.error(err);
-    alert('❌ Errore durante la generazione delle slide per Instagram.');
+    const dettaglio = (err && err.message) ? err.message : String(err);
+    alert(`❌ Errore durante la generazione delle slide per Instagram.\n\nDettaglio tecnico: ${dettaglio}`);
   }
 
   if (btn) { btn.disabled = false; btn.innerHTML = testoOriginaleBtn; }
