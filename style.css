@@ -1430,6 +1430,12 @@ table.rt td:last-child { text-align: center; font-weight: 700; }
   float: right;
 }
 
+/* Distanzia il pulsante Instagram (beta) da "Stampa Tutto": entrambi sono float:right,
+   quindi questo margine li separa visivamente invece di farli toccare */
+#btn-slide-instagram {
+  margin-right: 1cm;
+}
+
 /* Pulsante flottante "vai in fondo alla pagina": compare insieme al Riepilogo
    Narrativo, per non dover scorrere manualmente tutta la pagina */
 .floating-scroll-btn {
