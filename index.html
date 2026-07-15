@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Nutrizione Elite - Dott. De Salvo</title>
+  
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="manifest" href="site.webmanifest">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.5"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1"></script>
+  
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="animations.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-brand" onclick="location.href = location.href; return false;">
+      <img src="logo_de_salvo_transparent.png" alt="Logo Dr. De Salvo" class="topbar-logo">
+      <div class="topbar-text">
+        <div class="topbar-doctor">Dott. De Salvo Valentino</div>
+        <div class="topbar-subtitle">Nutrizione Clinica</div>
+      </div>
+    </div>
+    <div class="topbar-controls">
+      <div class="search-container">
+        <input type="text" id="patient-search" placeholder="🔍 Cerca paziente (Apri Rubrica)..." readonly style="cursor: pointer;">
+      </div>
+      <button id="btn-open-modal" class="btn btn-primary">
+        <span>+</span> Nuovo Paziente
+      </button>
+    </div>
+  </header>
+
+  <main class="dashboard-container">
+    
+    <section id="selected-patient-card" class="patient-badge-card">
+      <div class="patient-info-section">
+        <div class="patient-info-header">
+          <h2 id="current-patient-name">Seleziona un paziente per iniziare</h2>
+          <span id="patient-gender-badge" class="gender-badge"></span>
+        </div>
+        <div class="visit-selector-wrapper" style="margin-top: 12px;">
+          <label>Gestisci Visite:</label>
+          <div class="calendar-visit-wrapper">
+            <div id="calendar-container" class="calendar-container">
+              <div class="calendar-header">
+                <button id="calendar-prev" class="calendar-nav-btn" type="button">‹</button>
+                <h3 id="calendar-month-year"></h3>
+                <button id="calendar-next" class="calendar-nav-btn" type="button">›</button>
+              </div>
+              <div class="calendar-grid" id="calendar-grid"></div>
+            </div>
+            <div class="visit-navigation-buttons">
+              <button id="btn-add-visit" class="btn btn-success" type="button">➕ Aggiungi Visita</button>
+              <div class="visit-nav-flex">
+                <button id="btn-prev-visit" class="btn btn-secondary" type="button">← Visita Precedente</button>
+                <span id="visit-counter" class="visit-counter"></span>
+                <button id="btn-next-visit" class="btn btn-secondary" type="button">Visita Successiva →</button>
+              </div>
+              <div id="visit-current-date" class="visit-current-date"></div>
+              <div id="visit-weight-diff" class="visit-weight-diff"></div>
+              <div id="visit-extra-diff" class="visit-extra-diff"></div>
+              <div id="visit-history-range" class="visit-history-range"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="section-visita-form" class="visita-form-section" style="scroll-margin-top: 110px;">
+      <h2 id="form-visita-title">📊 Dati Antropometrici e Plicometrici</h2>
+      <form id="form-valutazione" onsubmit="return false;">
+        
+        <input type="hidden" id="in-nominativo">
+        <input type="hidden" id="in-sesso">
+
+        <div class="form-grid">
+          <div class="form-card">
+            <div class="card-header">📏 Parametri Base</div>
+            <div class="grid g3">
+              <div class="form-group">
+                <label>Età</label>
+                <input type="number" id="in-eta" placeholder="30" min="1" max="120">
+              </div>
+              <div class="form-group">
+                <label>Peso (kg)</label>
+                <input type="number" id="in-peso" placeholder="75.5" step="0.1" min="20" max="300">
+              </div>
+              <div class="form-group">
+                <label>Altezza (cm)</label>
+                <div class="altezza-fissa-wrapper">
+                  <input type="number" id="in-altezza" placeholder="180" min="100" max="250">
+                  <button type="button" id="btn-sblocca-altezza" class="btn-sblocca-altezza hidden" title="Sblocca per modificare">🔓</button>
+                </div>
+              </div>
+            </div>
+            <div class="form-group mt-12">
+              <label>Livello di Attività Fisica (LAF)</label>
+              <select id="in-laf">
+                <option value="1.2">Sedentario (1.2)</option>
+                <option value="1.375" selected>Leggero (1.375)</option>
+                <option value="1.55">Moderato (1.55)</option>
+                <option value="1.725">Molto Attivo (1.725)</option>
+                <option value="1.9">Atleta (1.9)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-card">
+            <div class="card-header">📐 Misure Antropometriche (cm)</div>
+            <div id="cont-antro" class="grid g3"></div>
+          </div>
+        </div>
+
+        <div class="form-card mt-16">
+          <div class="card-header">📊 Pliche (mm)</div>
+          <div id="cont-pliche" class="grid g4"></div>
+        </div>
+
+        <div class="form-actions">
+          <button id="btn-salva-visita" class="btn btn-success">
+            <span>💾</span> Salva Visita nel Cloud
+          </button>
+          <button id="btn-elimina-visita" class="btn btn-danger btn-elimina-visita hidden" type="button" title="Elimina questa visita">
+            <span>🗑️</span>
+          </button>
+          <button id="btn-calcola-report" class="btn btn-primary">
+            <span>📊</span> Elabora e Genera Report
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- PREVIEW AREA: 2 A4 PAGES (IDENTITY - NO CHANGES) -->
+    <section id="preview-area" class="hidden" style="margin-top: 40px;">
+      <div class="download-button-wrapper">
+        <button id="btn-pdf-composizione" class="btn btn-success btn-pdf">
+          📥 Scarica Composizione Corporea
+        </button>
+        <button id="btn-pdf-progressione" class="btn btn-success btn-pdf">
+          📥 Scarica Progressione
+        </button>
+      </div>
+
+      <div class="pg-container-mobile">
+        <div class="pg-wrap" id="pg1">
+          <div class="pdf-page" id="pdf-p1">
+            <div class="hdr">
+              <div class="hdr-sil"><img id="r-sil-l" alt="Silhouette"></div>
+              <div class="hdr-mid">
+                <img class="hdr-logo" id="r-logo1" alt="Logo">
+                <div class="p1-nome" id="r-nome1"></div>
+                <div class="p1-data" id="r-data1"></div>
+              </div>
+              <div class="hdr-sil r"><img id="r-sil-r" alt="Silhouette"></div>
+            </div>
+            <div class="title-blue">Fabbisogni Energetici</div>
+            <div class="tbl-wrap">
+              <img class="wmark" id="r-wm1" alt="Watermark">
+              <table class="rt">
+                <tbody>
+                  <tr><td>BMR (Metabolismo Basale)</td><td id="r-bmr">-</td></tr>
+                  <tr><td>RMR (Metabolismo a Riposo)</td><td id="r-rmr">-</td></tr>
+                  <tr><td>TDEE (Giornaliero)</td><td id="r-tdee">-</td></tr>
+                  <tr><td>TDEE Settimanale</td><td id="r-tdeew">-</td></tr>
+                  <tr><td>G/CC (Densità)</td><td id="r-gcc">-</td></tr>
+                  <tr><td>Massa Grassa (FM)</td><td id="r-fm">-</td></tr>
+                  <tr><td>Massa Magra (FFM)</td><td id="r-ffm">-</td></tr>
+                  <tr><td>Peso Ideale (Range)</td><td id="r-ibw">-</td></tr>
+                  <tr><td>Kg Grasso Corporeo</td><td id="r-kgg">-</td></tr>
+                  <tr><td>Kg Massa Magra</td><td id="r-kgm">-</td></tr>
+                  <tr><td id="r-lbl-pliche">Plicometria totale</td><td id="r-pliche">-</td></tr>
+                  <tr><td>Peso Corporeo Attuale</td><td id="r-peso">-</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pg-container-mobile">
+        <div class="pg-wrap" id="pg2">
+          <div class="pdf-page" id="pdf-p2">
+            <div class="hdr">
+              <div class="hdr-sil"><img id="r-esil-l" alt="Elite Graphic"></div>
+              <div class="hdr-mid">
+                <img class="hdr-logo" id="r-logo2" alt="Logo">
+                <div class="title-yellow">Composizione<br>Corporea</div>
+                <div class="p2-nome" id="r-nome2"></div>
+                <div class="p2-data" id="r-data2"></div>
+              </div>
+              <div class="hdr-sil r"><img id="r-esil-r" alt="Elite Graphic"></div>
+            </div>
+            <div class="p2-tbl-wrap">
+              <img class="wmark" id="r-wm2" alt="Watermark">
+              <table class="rt">
+                <tbody id="r-antro-rows"></tbody>
+              </table>
+            </div>
+            <div class="p2-footer" id="r-footer"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHARTS SECTION: PAGINA 1 - PESO, RMR+BMR, % MASSA, KG MASSA -->
+    <section id="charts-section" class="charts-grid hidden" style="margin-top: 30px;">
+      
+      <div class="chart-card">
+        <h3>Andamento Peso Corporeo</h3>
+        <div class="chart-mini-dashboard" id="mini-peso"></div>
+        <canvas id="chart-peso"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <h3>RMR + BMR (kcal)</h3>
+        <div class="chart-mini-dashboard" id="mini-rmr-bmr"></div>
+        <canvas id="chart-rmr-bmr"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <h3>Composizione Corporea %</h3>
+        <div class="chart-mini-dashboard" id="mini-composizione"></div>
+        <canvas id="chart-composizione"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <h3>Kg Massa Grassa e Magra</h3>
+        <div class="chart-mini-dashboard" id="mini-kg-massa"></div>
+        <canvas id="chart-kg-massa"></canvas>
+      </div>
+    </section>
+
+    <!-- PAGINA 2 - PLICHE -->
+    <section id="charts-section-pliche" class="charts-grid hidden" style="margin-top: 30px;">
+      
+      <div class="chart-card" style="grid-column: 1 / -1;">
+        <h3>Somma Pliche Totali</h3>
+        <div class="chart-mini-dashboard" id="mini-somma-pliche"></div>
+        <canvas id="chart-somma-pliche"></canvas>
+      </div>
+
+      <div class="chart-card" data-gender="uomo">
+        <h3>Plica Pettorale + Ascellare</h3>
+        <div class="chart-mini-dashboard" id="mini-pliche-1-uomo"></div>
+        <canvas id="chart-pliche-1-uomo"></canvas>
+      </div>
+
+      <div class="chart-card" data-gender="uomo">
+        <h3>Plica Addome + Soprailiaca</h3>
+        <div class="chart-mini-dashboard" id="mini-pliche-2-uomo"></div>
+        <canvas id="chart-pliche-2-uomo"></canvas>
+      </div>
+
+      <div class="chart-card" data-gender="uomo">
+        <h3>Plica Tricipitale + Sottoscapolare</h3>
+        <div class="chart-mini-dashboard" id="mini-pliche-3-uomo"></div>
+        <canvas id="chart-pliche-3-uomo"></canvas>
+      </div>
+
+      <div class="chart-card" data-gender="uomo">
+        <h3>Plica Coscia</h3>
+        <div class="chart-mini-dashboard" id="mini-pliche-4-uomo"></div>
+        <canvas id="chart-pliche-4-uomo"></canvas>
+      </div>
+
+      <div class="chart-card" data-gender="donna">
+        <h3>Plica Tricipitale + Soprailiaca</h3>
+        <div class="chart-mini-dashboard" id="mini-pliche-1-donna"></div>
+        <canvas id="chart-pliche-1-donna"></canvas>
+      </div>
+
+      <div class="chart-card" data-gender="donna">
+        <h3>Plica Addome + Ascellare</h3>
+        <div class="chart-mini-dashboard" id="mini-pliche-2-donna"></div>
+        <canvas id="chart-pliche-2-donna"></canvas>
+      </div>
+
+      <div class="chart-card" data-gender="donna">
+        <h3>Plica Coscia</h3>
+        <div class="chart-mini-dashboard" id="mini-pliche-3-donna"></div>
+        <canvas id="chart-pliche-3-donna"></canvas>
+      </div>
+    </section>
+
+    <!-- PAGINA 3 - CIRCONFERENZE -->
+    <section id="charts-section-circonferenze" class="charts-grid hidden" style="margin-top: 30px;">
+      
+      <div class="chart-card" data-gender="uomo">
+        <h3>Torace + Vita + Fianchi</h3>
+        <div class="chart-mini-dashboard" id="mini-circ-1-uomo"></div>
+        <canvas id="chart-circ-1-uomo"></canvas>
+      </div>
+
+      <div class="chart-card" data-gender="donna">
+        <h3>Vita + Fianchi + Gluteo</h3>
+        <div class="chart-mini-dashboard" id="mini-circ-1-donna"></div>
+        <canvas id="chart-circ-1-donna"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <h3>Braccio (Concentrica) + Coscia</h3>
+        <div class="chart-mini-dashboard" id="mini-circ-braccio"></div>
+        <canvas id="chart-circ-braccio"></canvas>
+      </div>
+    </section>
+
+    <!-- RIEPILOGO COMPLESSIVO - Testo narrativo automatico, editabile prima del download -->
+    <section id="sezione-riepilogo-narrativo" class="hidden" style="margin-top: 30px;">
+      <div class="chart-card">
+        <h3>📝 Riepilogo Complessivo</h3>
+        <p class="riepilogo-narrativo-hint">Testo generato automaticamente dai dati della visita. Puoi modificarlo liberamente: la versione che vedi qui è quella che finirà nel PDF.</p>
+        <textarea id="textarea-riepilogo-narrativo" class="riepilogo-narrativo-textarea" rows="6"></textarea>
+        <button id="btn-stampa-tutto" class="btn btn-success riepilogo-narrativo-btn-stampa">
+          <span>🖨️</span> Stampa Tutto (Composizione + Progressione)
+        </button>
+        <button id="btn-slide-instagram" class="btn btn-primary riepilogo-narrativo-btn-stampa">
+          <span>📸</span> Scarica Slide PNG
+        </button>
+      </div>
+    </section>
+
+    <!-- Contenitore invisibile usato per catturare fuori schermo la tabella "Riepilogo
+         Complessivo" quando si generano le slide Instagram (beta): stessa logica del
+         PDF, ma renderizzata come HTML per poterla fotografare con html2canvas -->
+    <div id="ig-riepilogo-offscreen" style="position: fixed; top: 0; left: -99999px;"></div>
+
+    <!-- 3RD PAGE: CHARTS FOR PDF (Hidden, used only for PDF generation) -->
+    <section id="charts-pdf-page" class="hidden">
+      <div class="pg-container-mobile">
+        <div class="pg-wrap" id="pg3">
+          <div class="pdf-page" id="pdf-p3">
+            <div class="pdf-charts-wrapper">
+              <h1 style="text-align: center; color: #1e40af; margin-bottom: 20px; font-size: 24px;">Andamento Storicizzato</h1>
+              <div id="pdf-charts-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <button id="btn-scroll-to-bottom" class="floating-scroll-btn hidden" type="button" title="Vai in fondo alla pagina">⬇️</button>
+
+  <div id="modal-paziente" class="modal hidden">
+    <div class="modal-overlay" id="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Registra Nuovo Paziente</h3>
+        <button id="btn-close-modal" class="modal-close" title="Chiudi">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Cognome Nome *</label>
+          <input type="text" id="new-nominativo" placeholder="Es. ROSSI MARIO" style="text-transform: uppercase;">
+        </div>
+        <div class="grid g2 mt-12">
+          <div class="form-group">
+            <label>Sesso *</label>
+            <select id="new-sesso">
+              <option value="">Seleziona...</option>
+              <option value="M">Maschio</option>
+              <option value="F">Femmina</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Data di Nascita</label>
+            <input type="date" id="new-nascita">
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="btn-close-modal-cancel" class="btn btn-secondary">Annulla</button>
+        <button type="button" id="btn-registra-paziente" class="btn btn-primary">Registra</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="banner-rubrica" class="rubrica-overlay hidden">
+    <div class="rubrica-content">
+      <div class="rubrica-header">
+        <div class="rubrica-title-wrap">
+          <h2>📖 Rubrica Anagrafica Pazienti</h2>
+          <p>Seleziona un profilo o usa la barra per filtrare istantaneamente i record</p>
+        </div>
+        <div class="rubrica-header-actions">
+          <button id="btn-backup-db" class="btn btn-secondary rubrica-backup-btn">
+            <span>💾</span> Backup DB
+          </button>
+          <button id="btn-close-rubrica" class="rubrica-close-btn">&times;</button>
+        </div>
+      </div>
+      <div class="rubrica-search-wrapper">
+        <input type="text" id="rubrica-search-input" placeholder="🔍 Digita il cognome o nome per filtrare la lista dei pazienti...">
+      </div>
+      <div id="rubrica-patients-container" class="rubrica-grid-list"></div>
+    </div>
+  </div>
+
+  <div id="modal-edit-paziente" class="modal modal-edit-paziente hidden">
+    <div class="modal-overlay" id="modal-edit-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Modifica Paziente</h3>
+        <button id="btn-close-edit-modal" class="modal-close" title="Chiudi">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Cognome Nome *</label>
+          <input type="text" id="edit-nominativo" placeholder="Es. ROSSI MARIO" style="text-transform: uppercase;">
+        </div>
+        <div class="grid g2 mt-12">
+          <div class="form-group">
+            <label>Sesso *</label>
+            <select id="edit-sesso">
+              <option value="">Seleziona...</option>
+              <option value="M">Maschio</option>
+              <option value="F">Femmina</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Data di Nascita</label>
+            <input type="date" id="edit-nascita">
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="btn-cancel-edit" class="btn btn-secondary">Annulla</button>
+        <button type="button" id="btn-delete-paziente" class="btn btn-danger">🗑️ Cancella Paziente</button>
+        <button type="button" id="btn-save-edit-paziente" class="btn btn-primary">Salva Modifiche</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=7.1" defer></script>
+</body>
+</html>
