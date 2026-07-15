@@ -1,0 +1,29 @@
+name: Mantieni attivo il database Supabase
+
+# Si attiva da sola secondo il calendario sotto (circa ogni 3 giorni), e può anche
+# essere avviata a mano dalla scheda "Actions" del repository — utile per un primo
+# test immediato, senza dover aspettare il prossimo giro programmato.
+on:
+  schedule:
+    - cron: '0 6 */3 * *'   # ~ogni 3 giorni, alle 06:00 UTC — ben dentro il limite dei 7 giorni di Supabase
+  workflow_dispatch:
+
+jobs:
+  battito-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Richiesta di lettura minima a Supabase (mantiene "vivo" il progetto)
+        run: |
+          RISPOSTA=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://ympbqcmbhnjerjqxgska.supabase.co/rest/v1/pazienti?select=id&limit=1" \
+            -H "apikey: sb_publishable_8bs12qrDkQmPi4pOQTMQyg_ef9r5-KW" \
+            -H "Authorization: Bearer sb_publishable_8bs12qrDkQmPi4pOQTMQyg_ef9r5-KW")
+
+          echo "Risposta ricevuta da Supabase: codice HTTP $RISPOSTA"
+
+          if [ "$RISPOSTA" -ge 200 ] && [ "$RISPOSTA" -lt 300 ]; then
+            echo "✅ Database raggiunto correttamente: conteggio dei 7 giorni di inattività resettato."
+          else
+            echo "❌ Richiesta fallita (codice $RISPOSTA) — controllare manualmente la dashboard Supabase."
+            exit 1
+          fi
