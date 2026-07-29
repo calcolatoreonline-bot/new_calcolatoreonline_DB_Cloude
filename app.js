@@ -26,8 +26,8 @@ const FILES = {
   silF:   'Siluette_Donna.jpeg',
   eliteM: 'COMPOSIZIONE CORPOREA UOMO.JPEG',
   eliteF: 'COMPOSIZIONE CORPOREA DONNA.JPEG',
-  corpoUomo:  'Uomo bilancia.JPEG',
-  corpoDonna: 'Donna bilancia.JPEG',
+  corpoUomo:  'Uomo bilancia.PNG',
+  corpoDonna: 'Donna bilancia.PNG',
 };
 
 let currentPatient = null;
